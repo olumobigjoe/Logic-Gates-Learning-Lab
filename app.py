@@ -1,1169 +1,437 @@
+"""
+Interactive Logic Gates Learning App
+Built for undergraduate electronics students (first module: Logic Gates)
+Run with: streamlit run app.py
+"""
+
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
-
-# ============================================================
-# PAGE CONFIGURATION
-# ============================================================
-
+# ----------------------------------------------------------------------
+# PAGE CONFIG
+# ----------------------------------------------------------------------
 st.set_page_config(
-    page_title="Logic Gates Learning Lab",
-    page_icon="⚡",
+    page_title="Logic Gates 101",
+    page_icon="🔌",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-
-# ============================================================
+# ----------------------------------------------------------------------
 # CUSTOM CSS
-# ============================================================
-
+# ----------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Main background */
-    .stApp {
-        background: linear-gradient(135deg, #f5f9ff 0%, #eef4ff 100%);
-    }
-
-    /* Main content */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 1200px;
-    }
-
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #102a43 0%, #173f5f 100%);
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: white;
-    }
-
-    /* Hero */
-    .hero {
-        padding: 2rem;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #102a43, #1f6f8b);
-        color: white;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 8px 25px rgba(16, 42, 67, 0.18);
-    }
-
-    .hero h1 {
-        margin-bottom: 0.5rem;
-        font-size: 2.6rem;
-    }
-
-    .hero p {
-        font-size: 1.1rem;
-        opacity: 0.95;
-    }
-
-    /* Cards */
-    .card {
-        background: white;
-        padding: 1.4rem;
-        border-radius: 16px;
-        margin: 0.8rem 0;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
-        border-left: 5px solid #1f6f8b;
-    }
-
+    .main {background-color: #0e1117;}
     .gate-card {
-        background: white;
-        padding: 1.3rem;
-        border-radius: 16px;
+        background: linear-gradient(135deg, #1f2937, #111827);
+        border: 1px solid #374151;
+        border-radius: 14px;
+        padding: 1.2rem 1.4rem;
         margin-bottom: 1rem;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-        border-top: 4px solid #1f6f8b;
     }
-
-    .gate-symbol {
-        font-size: 3rem;
-        font-weight: bold;
-        text-align: center;
-        padding: 0.5rem;
+    .app-card {
+        background: #1a1f2b;
+        border-left: 4px solid #22c55e;
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
     }
-
-    /* Output indicators */
     .led-on {
-        background: #d8f3dc;
-        color: #1b7f3a;
-        border: 3px solid #2e9d57;
-        border-radius: 50%;
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: auto;
         font-size: 3rem;
-        font-weight: bold;
+        color: #22c55e;
+        text-align: center;
     }
-
     .led-off {
-        background: #eeeeee;
-        color: #555555;
-        border: 3px solid #888888;
-        border-radius: 50%;
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: auto;
         font-size: 3rem;
-        font-weight: bold;
-    }
-
-    /* Result box */
-    .result-box {
-        padding: 1.2rem;
-        border-radius: 15px;
+        color: #ef4444;
+        opacity: 0.5;
         text-align: center;
-        background: white;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
-
-    /* Section headings */
-    .section-title {
-        color: #102a43;
-        border-bottom: 3px solid #1f6f8b;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Quiz answer */
-    .correct-answer {
-        background: #d8f3dc;
+    .big-symbol {
+        font-family: monospace;
+        font-size: 1.1rem;
+        background: #0b0f17;
+        border-radius: 8px;
         padding: 0.8rem;
-        border-radius: 10px;
-        margin: 0.4rem 0;
-    }
-
-    .wrong-answer {
-        background: #ffe0e0;
-        padding: 0.8rem;
-        border-radius: 10px;
-        margin: 0.4rem 0;
-    }
-
-    /* Footer */
-    .footer {
         text-align: center;
-        padding: 2rem;
-        color: #607080;
-        font-size: 0.9rem;
+        color: #93c5fd;
+        white-space: pre;
+    }
+    h1, h2, h3 {
+        color: #f9fafb;
     }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-
-# ============================================================
-# LOGIC GATE DATA
-# ============================================================
-
-GATE_INFO = {
+# ----------------------------------------------------------------------
+# GATE DATA (7 basic gates)
+# ----------------------------------------------------------------------
+GATES = {
     "AND": {
-        "expression": "Y = A · B",
-        "symbol": "A ──┐\n    AND ── Y\nB ──┘",
-        "description": "The output is 1 only when BOTH inputs are 1.",
-        "application": "Safety systems where two conditions must be satisfied.",
+        "expr": "Y = A · B",
+        "desc": "Output is HIGH (1) only when ALL inputs are HIGH.",
+        "symbol": "  A ──┐\n       )D──── Y\n  B ──┘\n  (AND shape)",
+        "apps": "Used in safety interlock systems (e.g., a machine only runs if door is closed AND power is on).",
+        "inputs": 2,
+        "logic": lambda a, b: int(a and b),
     },
     "OR": {
-        "expression": "Y = A + B",
-        "symbol": "A ──┐\n    OR ── Y\nB ──┘",
-        "description": "The output is 1 when AT LEAST ONE input is 1.",
-        "application": "Alarm systems where any one of several sensors can trigger an alarm.",
+        "expr": "Y = A + B",
+        "desc": "Output is HIGH (1) if AT LEAST ONE input is HIGH.",
+        "symbol": "  A ──╮\n       )>──── Y\n  B ──╯\n  (OR curved shape)",
+        "apps": "Used in alarm systems (alarm triggers if smoke sensor OR door sensor activates).",
+        "inputs": 2,
+        "logic": lambda a, b: int(a or b),
     },
     "NOT": {
-        "expression": "Y = ¬A",
-        "symbol": "A ── NOT ── Y",
-        "description": "The output is the opposite of the input.",
-        "application": "Inverting a digital signal or creating complementary control signals.",
+        "expr": "Y = A'",
+        "desc": "Output is the OPPOSITE (inverse) of the input.",
+        "symbol": "  A ──▷o──── Y\n  (Triangle + bubble)",
+        "apps": "Used to invert signals, e.g., turning an 'active LOW' sensor signal into 'active HIGH'.",
+        "inputs": 1,
+        "logic": lambda a, b=None: int(not a),
     },
     "NAND": {
-        "expression": "Y = ¬(A · B)",
-        "symbol": "A ──┐\n    NAND ── Y\nB ──┘",
-        "description": "The output is 0 only when BOTH inputs are 1.",
-        "application": "NAND gates can be combined to build many other digital circuits.",
+        "expr": "Y = (A · B)'",
+        "desc": "Output is LOW (0) only when ALL inputs are HIGH; otherwise HIGH. (AND + NOT)",
+        "symbol": "  A ──┐\n       )Do──── Y\n  B ──┘\n  (AND shape + bubble)",
+        "apps": "Universal gate — used to build ALL other gates; common in memory (SRAM) cells.",
+        "inputs": 2,
+        "logic": lambda a, b: int(not (a and b)),
     },
     "NOR": {
-        "expression": "Y = ¬(A + B)",
-        "symbol": "A ──┐\n    NOR ── Y\nB ──┘",
-        "description": "The output is 1 only when BOTH inputs are 0.",
-        "application": "Control circuits, memory circuits, and digital decision-making systems.",
+        "expr": "Y = (A + B)'",
+        "desc": "Output is HIGH (1) only when ALL inputs are LOW; otherwise LOW. (OR + NOT)",
+        "symbol": "  A ──╮\n       )>o──── Y\n  B ──╯\n  (OR shape + bubble)",
+        "apps": "Universal gate — used in rocket guidance systems (Apollo Guidance Computer used only NOR gates).",
+        "inputs": 2,
+        "logic": lambda a, b: int(not (a or b)),
     },
     "XOR": {
-        "expression": "Y = A ⊕ B",
-        "symbol": "A ──┐\n    XOR ── Y\nB ──┘",
-        "description": "The output is 1 when the inputs are DIFFERENT.",
-        "application": "Binary addition and error-detection circuits.",
+        "expr": "Y = A ⊕ B",
+        "desc": "Output is HIGH (1) only when inputs are DIFFERENT.",
+        "symbol": "  A ──╮\n      ))>──── Y\n  B ──╯\n  (OR shape, double curve)",
+        "apps": "Used in binary adders (half-adder sum bit) and simple parity/error-checking circuits.",
+        "inputs": 2,
+        "logic": lambda a, b: int(a != b),
     },
     "XNOR": {
-        "expression": "Y = ¬(A ⊕ B)",
-        "symbol": "A ──┐\n    XNOR ── Y\nB ──┘",
-        "description": "The output is 1 when the inputs are the SAME.",
-        "application": "Digital comparison circuits that check whether two bits match.",
-    }
+        "expr": "Y = (A ⊕ B)'",
+        "desc": "Output is HIGH (1) only when inputs are the SAME.",
+        "symbol": "  A ──╮\n      ))>o──── Y\n  B ──╯\n  (XOR shape + bubble)",
+        "apps": "Used in equality comparators — checking if two binary numbers/bits match.",
+        "inputs": 2,
+        "logic": lambda a, b: int(a == b),
+    },
 }
 
-
-# ============================================================
-# LOGIC FUNCTIONS
-# ============================================================
-
-def calculate_output(gate, a, b=None):
-    """
-    Calculate a gate output using actual Python boolean logic.
-
-    a and b are converted to Boolean values before calculation.
-    The function returns an integer: 0 or 1.
-    """
-
-    a = bool(a)
-
-    if gate == "NOT":
-        return int(not a)
-
-    b = bool(b)
-
-    if gate == "AND":
-        return int(a and b)
-
-    if gate == "OR":
-        return int(a or b)
-
-    if gate == "NAND":
-        return int(not (a and b))
-
-    if gate == "NOR":
-        return int(not (a or b))
-
-    if gate == "XOR":
-        return int(a != b)
-
-    if gate == "XNOR":
-        return int(a == b)
-
-    return 0
+GATE_ORDER = ["AND", "OR", "NOT", "NAND", "NOR", "XOR", "XNOR"]
 
 
-# ============================================================
-# TRUTH TABLE GENERATOR
-# ============================================================
-
-def create_truth_table(gate):
-    """Create a truth table dynamically using the gate logic."""
-
+def truth_table(gate_name):
+    g = GATES[gate_name]
     rows = []
-
-    if gate == "NOT":
+    if g["inputs"] == 1:
         for a in [0, 1]:
-            output = calculate_output(gate, a)
-            rows.append({
-                "A": a,
-                "Output": output
-            })
-
+            rows.append({"A": a, "Y": g["logic"](a)})
     else:
         for a in [0, 1]:
             for b in [0, 1]:
-                output = calculate_output(gate, a, b)
-                rows.append({
-                    "A": a,
-                    "B": b,
-                    "Output": output
-                })
-
+                rows.append({"A": a, "B": b, "Y": g["logic"](a, b)})
     return pd.DataFrame(rows)
 
 
-# ============================================================
-# TRUTH TABLE WITH CURRENT ROW HIGHLIGHT
-# ============================================================
+# ----------------------------------------------------------------------
+# QUIZ DATA (5 questions, 3 options each)
+# ----------------------------------------------------------------------
+QUIZ = [
+    {
+        "q": "1. Which gate outputs HIGH only when ALL its inputs are HIGH?",
+        "options": ["OR gate", "AND gate", "NOT gate"],
+        "answer": "AND gate",
+    },
+    {
+        "q": "2. What does the NOT gate do to its single input?",
+        "options": ["Doubles it", "Inverts it", "Leaves it unchanged"],
+        "answer": "Inverts it",
+    },
+    {
+        "q": "3. Which gate is called a 'universal gate' because it can build all others?",
+        "options": ["XOR gate", "NAND gate", "XNOR gate"],
+        "answer": "NAND gate",
+    },
+    {
+        "q": "4. An XOR gate outputs HIGH (1) when its two inputs are:",
+        "options": ["The same", "Different", "Both zero"],
+        "answer": "Different",
+    },
+    {
+        "q": "5. Which of these is a real-world application of logic gates?",
+        "options": ["Traffic light controllers", "Cooking pasta", "Painting a wall"],
+        "answer": "Traffic light controllers",
+    },
+]
 
-def highlight_current_row(df, gate, a, b=None):
-    """Highlight the row matching the simulator's current inputs."""
+# ----------------------------------------------------------------------
+# SESSION STATE INIT
+# ----------------------------------------------------------------------
+if "quiz_submitted" not in st.session_state:
+    st.session_state.quiz_submitted = False
+if "quiz_answers" not in st.session_state:
+    st.session_state.quiz_answers = {i: None for i in range(len(QUIZ))}
 
-    def highlight(row):
-        if gate == "NOT":
-            match = row["A"] == a
-        else:
-            match = row["A"] == a and row["B"] == b
-
-        if match:
-            return ["background-color: #d8f3dc; font-weight: bold"] * len(row)
-
-        return [""] * len(row)
-
-    return df.style.apply(highlight, axis=1)
-
-
-# ============================================================
-# SIDEBAR
-# ============================================================
-
-with st.sidebar:
-
-    st.markdown(
-        """
-        <h2 style="text-align:center;">⚡ Logic Gates Lab</h2>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown("---")
-
-    st.markdown("### 📚 Student Guide")
-
-    st.markdown(
-        """
-        **How to use this app:**
-
-        1. Start with the Introduction.
-        2. Study each logic gate.
-        3. Examine the truth tables.
-        4. Try the Interactive Simulator.
-        5. Test yourself with the Quiz.
-
-        💡 **Tip:** Try predicting the output before changing the simulator inputs.
-        """
-    )
-
-    st.markdown("---")
-
-    page = st.radio(
-        "🧭 Navigate",
-        [
-            "🏠 Introduction",
-            "🔌 Types of Logic Gates",
-            "🌍 Uses & Applications",
-            "🎛️ Interactive Simulator",
-            "📝 Quiz"
-        ]
-    )
-
-    st.markdown("---")
-
-    st.caption(
-        "Designed for undergraduate students learning digital electronics for the first time."
-    )
-
-
-# ============================================================
-# HERO HEADER
-# ============================================================
-
-st.markdown(
-    """
-    <div class="hero">
-        <h1>⚡ Logic Gates Learning Lab</h1>
-        <p>
-        An interactive beginner-friendly introduction to the building blocks
-        of digital electronics.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
+# ----------------------------------------------------------------------
+# SIDEBAR NAVIGATION
+# ----------------------------------------------------------------------
+st.sidebar.title("🔌 Logic Gates 101")
+st.sidebar.caption("Module 1 · Digital Electronics Fundamentals")
+page = st.sidebar.radio(
+    "Navigate",
+    [
+        "1️⃣ Introduction",
+        "2️⃣ Types of Gates",
+        "3️⃣ Uses & Applications",
+        "4️⃣ Gate Simulator",
+        "5️⃣ Quiz",
+    ],
+)
+st.sidebar.markdown("---")
+st.sidebar.info(
+    "💡 Tip: Work through the sections in order. Use the **Simulator** to "
+    "build intuition before attempting the **Quiz**."
 )
 
-
-# ============================================================
+# ----------------------------------------------------------------------
 # 1. INTRODUCTION
-# ============================================================
-
-if page == "🏠 Introduction":
-
-    st.markdown(
-        '<h2 class="section-title">🏠 Introduction to Logic Gates</h2>',
-        unsafe_allow_html=True
-    )
-
-    st.info(
-        "Welcome! This section introduces the basic idea of logic gates "
-        "before you start experimenting with them."
-    )
-
+# ----------------------------------------------------------------------
+if page.startswith("1"):
+    st.title("🔌 Introduction to Logic Gates")
     st.markdown(
         """
-        <div class="card">
-        <h3>💡 What is a Logic Gate?</h3>
+        ### What is a Logic Gate?
+        A **logic gate** is a tiny electronic building block that makes a decision based on
+        **binary inputs** — signals that are either **0 (LOW / OFF)** or **1 (HIGH / ON)**.
 
-        <p>
-        A <b>logic gate</b> is a small digital circuit that makes a decision
-        based on one or more inputs.
-        </p>
+        Think of a logic gate like a **light switch with rules**:
+        - A simple switch turns a light ON or OFF based on *one* action.
+        - A logic gate turns its output ON or OFF based on the **combination** of one or more inputs,
+          following a fixed rule (its "logic").
 
-        <p>
-        Think of it as a tiny electronic decision-maker. It receives information,
-        processes it according to a rule, and produces an output.
-        </p>
-
-        <p>
-        For example, an AND gate asks:
-        <b>"Are both conditions true?"</b>
-        </p>
-        </div>
-        """,
-        unsafe_allow_html=True
+        ### Why Do Logic Gates Matter?
+        Logic gates are the **fundamental building blocks of all digital electronics** — including
+        calculators, smartphones, and the CPU inside your laptop. By combining thousands (or billions!)
+        of simple gates, engineers build circuits that can add numbers, store memory, and run entire computers.
+        """
     )
-
     col1, col2 = st.columns(2)
-
     with col1:
-
         st.markdown(
             """
-            <div class="card">
-            <h3>🔢 Binary: 0 and 1</h3>
-
-            <p>
-            Digital electronics normally represents information using two
-            states:
-            </p>
-
-            <ul>
-                <li><b>0</b> = LOW / OFF / False</li>
-                <li><b>1</b> = HIGH / ON / True</li>
-            </ul>
-
-            <p>
-            These two values form the foundation of binary digital systems.
-            </p>
+            <div class="gate-card">
+            <h4>🔢 Binary Basics</h4>
+            <p><b>1 (HIGH)</b> = ON, True, usually 5V or 3.3V<br>
+            <b>0 (LOW)</b> = OFF, False, usually 0V</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-
     with col2:
-
         st.markdown(
             """
-            <div class="card">
-            <h3>💡 Simple Analogy: Light Switches</h3>
-
-            <p>
-            Imagine two light switches.
-            </p>
-
-            <p>
-            An <b>AND gate</b> behaves like a lamp that turns on only when
-            <b>both switches</b> are ON.
-            </p>
-
-            <p>
-            An <b>OR gate</b> behaves like a lamp that turns on when
-            <b>at least one switch</b> is ON.
-            </p>
+            <div class="gate-card">
+            <h4>🚦 Everyday Analogy</h4>
+            <p>An AND gate is like needing a <b>key AND a PIN</b> to open a safe —
+            both conditions must be true before you get access.</p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
+    st.success("👉 Head to **'Types of Gates'** in the sidebar to explore all 7 gates.")
 
-    st.markdown(
-        """
-        <div class="card">
-        <h3>🖥️ Why Do Logic Gates Matter?</h3>
+# ----------------------------------------------------------------------
+# 2. TYPES OF GATES
+# ----------------------------------------------------------------------
+elif page.startswith("2"):
+    st.title("2️⃣ Types of Logic Gates")
+    st.caption("There are 7 basic logic gates every electronics student should know.")
 
-        <p>
-        Logic gates are the basic building blocks of digital electronics.
-        Millions or billions of gates can work together inside modern
-        electronic devices.
-        </p>
+    for name in GATE_ORDER:
+        g = GATES[name]
+        with st.expander(f"**{name} Gate** — {g['expr']}", expanded=False):
+            c1, c2 = st.columns([1, 1])
+            with c1:
+                st.markdown(f'<div class="big-symbol">{g["symbol"]}</div>', unsafe_allow_html=True)
+                st.markdown(f"**Boolean Expression:** `{g['expr']}`")
+                st.write(g["desc"])
+            with c2:
+                st.markdown("**Truth Table**")
+                st.dataframe(truth_table(name), use_container_width=True, hide_index=True)
 
-        <ul>
-            <li>💻 Computers</li>
-            <li>🧠 CPUs and processors</li>
-            <li>💾 Memory systems</li>
-            <li>📱 Smartphones</li>
-            <li>🧮 Calculators</li>
-            <li>🚦 Control systems</li>
-            <li>🤖 Digital and robotic systems</li>
-        </ul>
-
-        <p>
-        Understanding logic gates is therefore an important first step toward
-        understanding how digital computers and electronic control systems work.
-        </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.success(
-        "Key idea: A logic gate takes binary inputs and produces a binary output according to a specific rule."
-    )
-
-
-# ============================================================
-# 2. TYPES OF LOGIC GATES
-# ============================================================
-
-elif page == "🔌 Types of Logic Gates":
-
-    st.markdown(
-        '<h2 class="section-title">🔌 The 7 Basic Logic Gates</h2>',
-        unsafe_allow_html=True
-    )
-
-    st.caption(
-        "Study the expression, simple symbol representation, truth table, and behavior of each gate."
-    )
-
-    selected_gate = st.selectbox(
-        "Choose a gate to study:",
-        list(GATE_INFO.keys())
-    )
-
-    info = GATE_INFO[selected_gate]
-
-    st.markdown(
-        f"""
-        <div class="gate-card">
-
-        <h2>{selected_gate} Gate</h2>
-
-        <div class="gate-symbol">
-        <pre>{info["symbol"]}</pre>
-        </div>
-
-        <h4>Boolean Expression</h4>
-
-        <p style="font-size:1.3rem;">
-        <b>{info["expression"]}</b>
-        </p>
-
-        <h4>In simple English</h4>
-
-        <p>{info["description"]}</p>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.subheader("📊 Truth Table")
-
-    truth_table = create_truth_table(selected_gate)
-
-    st.table(truth_table)
-
-    st.success(
-        f"Remember: {selected_gate} — {info['description']}"
-    )
-
-    st.markdown("---")
-
-    st.subheader("📚 Quick Reference: All 7 Gates")
-
-    for gate_name, gate_info in GATE_INFO.items():
-
-        with st.expander(f"⚡ {gate_name} Gate"):
-
-            col1, col2 = st.columns([1, 2])
-
-            with col1:
-                st.code(gate_info["symbol"])
-
-            with col2:
-                st.markdown(
-                    f"**Boolean expression:** `{gate_info['expression']}`"
-                )
-                st.write(gate_info["description"])
-
-
-# ============================================================
+# ----------------------------------------------------------------------
 # 3. USES AND APPLICATIONS
-# ============================================================
-
-elif page == "🌍 Uses & Applications":
-
-    st.markdown(
-        '<h2 class="section-title">🌍 Uses and Areas of Application</h2>',
-        unsafe_allow_html=True
+# ----------------------------------------------------------------------
+elif page.startswith("3"):
+    st.title("3️⃣ Uses and Areas of Application")
+    st.write(
+        "Logic gates aren't just theory — they're at work inside devices you use every day. "
+        "Expand each gate below to see a real-world application."
     )
+    for name in GATE_ORDER:
+        g = GATES[name]
+        st.markdown(
+            f"""
+            <div class="app-card">
+            <b>{name} Gate</b> — {g['apps']}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    st.info(
-        "Logic gates are not just classroom concepts. They are used inside many of the digital systems we interact with every day."
-    )
-
-    applications = [
-        (
-            "💻 Computers and CPUs",
-            "Logic gates combine to perform calculations, comparisons, and decisions inside processors.",
-            "AND, OR, NOT, XOR"
-        ),
-        (
-            "🧮 Calculators",
-            "Digital arithmetic circuits use logic gates to perform addition, subtraction, and other operations.",
-            "AND, XOR, NOT"
-        ),
-        (
-            "🚦 Traffic Light Controllers",
-            "Logic circuits can decide when lights should change based on timing and sensor conditions.",
-            "AND, OR, NOT"
-        ),
-        (
-            "🚨 Alarm Systems",
-            "Several sensors can be combined so that an alarm activates when specific conditions occur.",
-            "AND, OR, NOT"
-        ),
-        (
-            "➕ Arithmetic Circuits",
-            "XOR and AND gates are important components of binary addition circuits.",
-            "XOR, AND"
-        ),
-        (
-            "💾 Memory Devices",
-            "Logic gates can be connected to create circuits capable of storing digital states.",
-            "NAND, NOR"
-        ),
-        (
-            "📱 Smartphones",
-            "Processors and digital control circuits inside smartphones contain huge numbers of logic gates.",
-            "All basic gates"
-        ),
-        (
-            "🤖 Control Systems",
-            "Industrial machines and robots use digital logic to make decisions based on sensors.",
-            "AND, OR, NOT, NAND, NOR"
-        ),
+    st.markdown("### 🌍 Broader Application Areas")
+    apps = [
+        "🖩 **Calculators** — arithmetic circuits (adders/subtractors) built from XOR & AND gates",
+        "🚦 **Traffic Light Controllers** — sequencing logic to switch lights safely",
+        "🚨 **Alarm & Security Systems** — combining sensor inputs (motion, door, smoke)",
+        "💾 **Computer Memory (RAM)** — NAND/NOR gates form the basis of memory cells",
+        "🧠 **Microprocessors/CPUs** — billions of gates combined to execute instructions",
+        "🔐 **Access Control Systems** — multi-condition unlocking (badge AND PIN)",
     ]
+    for a in apps:
+        st.markdown(f"- {a}")
 
-    for title, description, gates in applications:
+# ----------------------------------------------------------------------
+# 4. GATE SIMULATOR
+# ----------------------------------------------------------------------
+elif page.startswith("4"):
+    st.title("4️⃣ Interactive Gate Simulator")
+    st.caption("Choose a gate, toggle the inputs, and watch the output LED respond live.")
 
-        with st.expander(title):
+    sel = st.selectbox("Select a Logic Gate", GATE_ORDER)
+    g = GATES[sel]
 
-            st.write(description)
+    st.markdown(f"**Boolean Expression:** `{g['expr']}`   |   {g['desc']}")
 
-            st.markdown(
-                f"**Useful gates:** `{gates}`"
-            )
+    col_inputs, col_output = st.columns([1, 1])
+
+    with col_inputs:
+        st.subheader("Inputs")
+        a = st.toggle("Input A", value=False, key="input_a")
+        a = int(a)
+        if g["inputs"] == 2:
+            b = st.toggle("Input B", value=False, key="input_b")
+            b = int(b)
+            output = g["logic"](a, b)
+        else:
+            b = None
+            output = g["logic"](a)
+
+    with col_output:
+        st.subheader("Output")
+        if output == 1:
+            st.markdown('<div class="led-on">🟢</div>', unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align:center;color:#22c55e;'>Y = 1 (HIGH)</h3>", unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="led-off">🔴</div>', unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align:center;color:#ef4444;'>Y = 0 (LOW)</h3>", unsafe_allow_html=True)
 
     st.markdown("---")
-
-    st.subheader("🔍 Gate-to-Application Map")
-
-    application_data = pd.DataFrame(
-        {
-            "Gate": [
-                "AND",
-                "OR",
-                "NOT",
-                "NAND",
-                "NOR",
-                "XOR",
-                "XNOR"
-            ],
-            "Example Application": [
-                "Safety/interlock systems",
-                "Alarm systems",
-                "Signal inversion",
-                "Universal digital circuits",
-                "Control and memory circuits",
-                "Binary addition",
-                "Digital comparison"
-            ]
-        }
-    )
-
-    st.dataframe(
-        application_data,
-        use_container_width=True,
-        hide_index=True
-    )
-
-
-# ============================================================
-# 4. INTERACTIVE SIMULATOR
-# ============================================================
-
-elif page == "🎛️ Interactive Simulator":
-
-    st.markdown(
-        '<h2 class="section-title">🎛️ Interactive Logic Gate Simulator</h2>',
-        unsafe_allow_html=True
-    )
-
-    st.info(
-        "Change the inputs and watch the output change immediately. "
-        "The output is calculated using Python Boolean logic."
-    )
-
-    gate = st.selectbox(
-        "🔌 Select a logic gate:",
-        list(GATE_INFO.keys()),
-        key="simulator_gate"
-    )
-
-    st.markdown(
-        f"""
-        <div class="card">
-        <h3>{gate} Gate</h3>
-        <p>{GATE_INFO[gate]["description"]}</p>
-        <p><b>Boolean expression:</b> {GATE_INFO[gate]["expression"]}</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # --------------------------------------------------------
-    # INPUT CONTROLS
-    # --------------------------------------------------------
-
-    st.subheader("🎚️ Inputs")
-
-    if gate == "NOT":
-
-        a = st.radio(
-            "Input A",
-            [0, 1],
-            horizontal=True,
-            key="not_input_a"
-        )
-
-        b = None
-
+    st.subheader("📋 Truth Table (current row highlighted)")
+    tt = truth_table(sel)
+    if g["inputs"] == 2:
+        mask = (tt["A"] == a) & (tt["B"] == b)
     else:
+        mask = tt["A"] == a
 
-        col1, col2 = st.columns(2)
+    def highlight_row(row):
+        is_current = (row["A"] == a) and (g["inputs"] == 1 or row["B"] == b)
+        return ["background-color: #16a34a; color: white" if is_current else "" for _ in row]
 
-        with col1:
-
-            a = st.radio(
-                "Input A",
-                [0, 1],
-                horizontal=True,
-                key="input_a"
-            )
-
-        with col2:
-
-            b = st.radio(
-                "Input B",
-                [0, 1],
-                horizontal=True,
-                key="input_b"
-            )
-
-    # Calculate output
-    output = calculate_output(gate, a, b)
+    st.dataframe(tt.style.apply(highlight_row, axis=1), use_container_width=True, hide_index=True)
 
     st.markdown("---")
-
-    # --------------------------------------------------------
-    # DISPLAY CIRCUIT INPUTS
-    # --------------------------------------------------------
-
-    if gate == "NOT":
-
+    st.subheader("🔗 Bonus: Cascaded Circuit — AND → NOT (i.e. a NAND gate built from parts)")
+    st.caption("This shows how simple gates combine to build more complex logic.")
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        ca = st.toggle("Input A ", value=False, key="cascade_a")
+        cb = st.toggle("Input B ", value=False, key="cascade_b")
+    and_out = int(ca and cb)
+    not_out = int(not and_out)
+    with cc2:
+        st.write(f"AND stage output: **{and_out}**")
+        st.write(f"NOT stage output (final): **{not_out}**")
         st.markdown(
-            f"""
-            <div class="result-box">
-                <h3>Input A</h3>
-                <h1>{a}</h1>
-            </div>
-            """,
-            unsafe_allow_html=True
+            '<div class="led-on">🟢</div>' if not_out == 1 else '<div class="led-off">🔴</div>',
+            unsafe_allow_html=True,
         )
+    st.info("Notice: this cascade behaves exactly like a single NAND gate!")
 
-    else:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.markdown(
-                f"""
-                <div class="result-box">
-                    <h3>Input A</h3>
-                    <h1>{a}</h1>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col2:
-
-            st.markdown(
-                f"""
-                <div class="result-box">
-                    <h3>Input B</h3>
-                    <h1>{b}</h1>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # --------------------------------------------------------
-    # OUTPUT LED
-    # --------------------------------------------------------
-
-    st.subheader("💡 Output")
-
-    if output == 1:
-
-        st.markdown(
-            """
-            <div class="led-on">
-                1
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.success("🟢 OUTPUT = 1 — HIGH / ON / TRUE")
-
-    else:
-
-        st.markdown(
-            """
-            <div class="led-off">
-                0
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.info("🔴 OUTPUT = 0 — LOW / OFF / FALSE")
-
-    # --------------------------------------------------------
-    # CURRENT TRUTH TABLE ROW
-    # --------------------------------------------------------
-
-    st.markdown("---")
-
-    st.subheader("📊 Current Truth Table Row")
-
-    table = create_truth_table(gate)
-
-    highlighted = highlight_current_row(
-        table,
-        gate,
-        a,
-        b
-    )
-
-    st.dataframe(
-        highlighted,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # --------------------------------------------------------
-    # SIMPLE CASCADING CIRCUIT
-    # --------------------------------------------------------
-
-    st.markdown("---")
-
-    st.subheader("🔗 Try a Two-Gate Combination")
-
-    st.caption(
-        "This example connects an AND gate to a NOT gate. "
-        "The AND output becomes the input of the NOT gate."
-    )
-
-    combo_col1, combo_col2 = st.columns(2)
-
-    with combo_col1:
-
-        combo_a = st.radio(
-            "Combination Input A",
-            [0, 1],
-            horizontal=True,
-            key="combo_a"
-        )
-
-    with combo_col2:
-
-        combo_b = st.radio(
-            "Combination Input B",
-            [0, 1],
-            horizontal=True,
-            key="combo_b"
-        )
-
-    and_output = calculate_output(
-        "AND",
-        combo_a,
-        combo_b
-    )
-
-    final_output = calculate_output(
-        "NOT",
-        and_output
-    )
-
-    st.markdown(
-        f"""
-        <div class="card">
-        <h3>AND → NOT Circuit</h3>
-
-        <p style="font-size:1.2rem;">
-        A = <b>{combo_a}</b>
-        &nbsp;&nbsp; | &nbsp;&nbsp;
-        B = <b>{combo_b}</b>
-        </p>
-
-        <p style="font-size:1.2rem;">
-        AND output = <b>{and_output}</b>
-        </p>
-
-        <p style="font-size:1.2rem;">
-        NOT receives {and_output} and produces:
-        <b>{final_output}</b>
-        </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.success(
-        "This demonstrates an important digital-electronics idea: "
-        "gates can be connected together to create more complex circuits."
-    )
-
-
-# ============================================================
+# ----------------------------------------------------------------------
 # 5. QUIZ
-# ============================================================
+# ----------------------------------------------------------------------
+elif page.startswith("5"):
+    st.title("5️⃣ Logic Gates Quiz")
+    st.caption("5 questions · 3 options each · Scored out of 100%")
 
-elif page == "📝 Quiz":
-
-    st.markdown(
-        '<h2 class="section-title">📝 Logic Gates Quiz</h2>',
-        unsafe_allow_html=True
-    )
-
-    st.info(
-        "There are 5 questions. Each question has exactly three possible answers. "
-        "Choose your answers and click Submit Quiz."
-    )
-
-    # --------------------------------------------------------
-    # QUIZ DATA
-    # --------------------------------------------------------
-
-    questions = {
-        1: {
-            "question": "Which gate produces 1 only when BOTH inputs are 1?",
-            "options": [
-                "AND gate",
-                "OR gate",
-                "NOT gate"
-            ],
-            "answer": "AND gate"
-        },
-
-        2: {
-            "question": "What does a NOT gate do?",
-            "options": [
-                "Adds two inputs",
-                "Reverses the input",
-                "Always produces 1"
-            ],
-            "answer": "Reverses the input"
-        },
-
-        3: {
-            "question": "Which gate produces 1 when its two inputs are DIFFERENT?",
-            "options": [
-                "XOR gate",
-                "XNOR gate",
-                "NOR gate"
-            ],
-            "answer": "XOR gate"
-        },
-
-        4: {
-            "question": "If A = 1 and B = 0, what is the output of an OR gate?",
-            "options": [
-                "0",
-                "1",
-                "It depends on the NOT gate"
-            ],
-            "answer": "1"
-        },
-
-        5: {
-            "question": "Which type of gate is commonly used in binary addition?",
-            "options": [
-                "XOR gate",
-                "NOR gate",
-                "XNOR gate"
-            ],
-            "answer": "XOR gate"
-        }
-    }
-
-    # Initialize session state
-    if "quiz_submitted" not in st.session_state:
-        st.session_state.quiz_submitted = False
-
-    if "quiz_score" not in st.session_state:
-        st.session_state.quiz_score = 0
-
-    if "quiz_answers" not in st.session_state:
-        st.session_state.quiz_answers = {}
-
-    # --------------------------------------------------------
-    # DISPLAY QUESTIONS
-    # --------------------------------------------------------
-
-    for number, data in questions.items():
-
-        st.markdown(
-            f"""
-            <div class="card">
-            <h3>Question {number}</h3>
-            <p>{data["question"]}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.radio(
-            f"Choose your answer for Question {number}:",
-            data["options"],
-            key=f"quiz_q_{number}"
-        )
-
-    # --------------------------------------------------------
-    # SUBMIT QUIZ
-    # --------------------------------------------------------
-
-    if st.button(
-        "🚀 Submit Quiz",
-        type="primary",
-        use_container_width=True
-    ):
-
-        correct = 0
-        student_answers = {}
-
-        for number, data in questions.items():
-
-            selected = st.session_state.get(
-                f"quiz_q_{number}"
+    with st.form("quiz_form"):
+        for i, item in enumerate(QUIZ):
+            st.markdown(f"**{item['q']}**")
+            choice = st.radio(
+                label=f"q{i}",
+                options=item["options"],
+                index=None,
+                key=f"quiz_radio_{i}",
+                label_visibility="collapsed",
             )
+            st.session_state.quiz_answers[i] = choice
+            st.markdown("")
+        submitted = st.form_submit_button("✅ Submit Quiz")
 
-            student_answers[number] = selected
-
-            if selected == data["answer"]:
-                correct += 1
-
-        score = int((correct / len(questions)) * 100)
-
-        st.session_state.quiz_score = score
-        st.session_state.quiz_answers = student_answers
+    if submitted:
         st.session_state.quiz_submitted = True
 
-    # --------------------------------------------------------
-    # RESULTS
-    # --------------------------------------------------------
-
     if st.session_state.quiz_submitted:
-
-        score = st.session_state.quiz_score
         answers = st.session_state.quiz_answers
-
-        st.markdown("---")
-
-        st.subheader("🏆 Quiz Results")
-
-        st.metric(
-            "Your Score",
-            f"{score}%"
-        )
-
-        st.progress(
-            score / 100
-        )
-
-        if score > 80:
-
-            st.success(
-                "🎉 Excellent work! You have a strong understanding of the basic logic gates."
-            )
-
-            st.balloons()
-
-        elif score >= 60:
-
-            st.info(
-                "👍 Good work! Review the truth tables and try the quiz again."
-            )
-
+        if any(v is None for v in answers.values()):
+            st.warning("⚠️ Please answer all 5 questions before submitting.")
         else:
-
-            st.warning(
-                "📚 Keep learning! Review the gate explanations and simulator before trying again."
+            correct_count = sum(
+                1 for i, item in enumerate(QUIZ) if answers[i] == item["answer"]
             )
+            score_pct = round((correct_count / len(QUIZ)) * 100)
 
-        st.markdown("---")
+            st.markdown("## 📊 Your Results")
+            m1, m2 = st.columns(2)
+            m1.metric("Score", f"{correct_count}/{len(QUIZ)}")
+            m2.metric("Percentage", f"{score_pct}%")
+            st.progress(score_pct / 100)
 
-        st.subheader("📋 Question Review")
-
-        for number, data in questions.items():
-
-            selected = answers.get(number)
-
-            if selected == data["answer"]:
-
-                st.markdown(
-                    f"""
-                    <div class="correct-answer">
-                    ✅ <b>Question {number}: Correct</b><br>
-                    Your answer: {selected}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
+            if score_pct >= 80:
+                st.success(f"🎉 Excellent work! You scored {score_pct}%.")
+                st.balloons()
+            elif score_pct >= 50:
+                st.info(f"👍 Good effort! You scored {score_pct}%. Review the gates you missed below.")
             else:
+                st.error(f"📚 You scored {score_pct}%. Revisit the 'Types of Gates' section and try again!")
 
-                st.markdown(
-                    f"""
-                    <div class="wrong-answer">
-                    ❌ <b>Question {number}: Incorrect</b><br>
-                    Your answer: {selected}<br>
-                    Correct answer: <b>{data["answer"]}</b>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            st.markdown("### Review")
+            for i, item in enumerate(QUIZ):
+                user_ans = answers[i]
+                is_correct = user_ans == item["answer"]
+                icon = "✅" if is_correct else "❌"
+                st.markdown(f"{icon} **{item['q']}**")
+                st.write(f"Your answer: {user_ans}")
+                if not is_correct:
+                    st.write(f"Correct answer: **{item['answer']}**")
+                st.markdown("---")
 
-        st.markdown("---")
-
-        if st.button("🔄 Try Quiz Again"):
-
-            st.session_state.quiz_submitted = False
-            st.session_state.quiz_score = 0
-            st.session_state.quiz_answers = {}
-
-            st.rerun()
-
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div class="footer">
-        ⚡ <b>Logic Gates Learning Lab</b><br>
-        Learn • Experiment • Predict • Understand<br><br>
-        A beginner-friendly digital electronics learning tool.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+            if st.button("🔄 Retake Quiz"):
+                st.session_state.quiz_submitted = False
+                st.session_state.quiz_answers = {i: None for i in range(len(QUIZ))}
+                for i in range(len(QUIZ)):
+                    st.session_state.pop(f"quiz_radio_{i}", None)
+                st.rerun()
