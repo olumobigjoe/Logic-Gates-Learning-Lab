@@ -351,7 +351,7 @@ if "quiz_answers" not in st.session_state:
 # ----------------------------------------------------------------------
 # SIDEBAR NAVIGATION
 # ----------------------------------------------------------------------
-st.sidebar.title("🔌 Logic Gates 101")
+st.sidebar.title("🔌 Logic Gates")
 st.sidebar.caption("Module 1 · Digital Electronics Fundamentals")
 page = st.sidebar.radio(
     "Navigate",
