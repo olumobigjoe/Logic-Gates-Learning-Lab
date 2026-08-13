@@ -1,4 +1,4 @@
-
+"""
 Interactive Logic Gates Learning App
 Built for undergraduate electronics students (first module: Logic Gates)
 Run with: streamlit run app.py
