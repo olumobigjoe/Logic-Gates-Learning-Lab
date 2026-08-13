@@ -197,6 +197,16 @@ GATE_COLORS = {
 }
 
 
+def _flat(html):
+    """Collapse multi-line/indented HTML into one line with no blank lines.
+
+    Streamlit's Markdown renderer treats a blank line inside an HTML block as
+    the end of that block, so any indented lines that follow get shown as
+    literal text instead of being rendered. Flattening avoids that entirely.
+    """
+    return "".join(line.strip() for line in html.strip().splitlines())
+
+
 def _input_lines(two_inputs, fill):
     """Common A / B (or just A) input leads + labels."""
     if two_inputs:
@@ -225,52 +235,52 @@ def draw_gate_svg(name):
               fill="{color}22" stroke="{color}" stroke-width="4"/>
         <line x1="160" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    if name == "OR":
+    elif name == "OR":
         body = f"""
         <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
               fill="{color}22" stroke="{color}" stroke-width="4"/>
         <line x1="170" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    if name == "NOT":
+    elif name == "NOT":
         body = f"""
         <path d="M60,20 L60,120 L160,70 Z" fill="{color}22" stroke="{color}" stroke-width="4"/>
         <circle cx="172" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
         <line x1="184" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(False, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(False, color) + body + out_label + svg_close
 
-    if name == "NAND":
+    elif name == "NAND":
         body = f"""
         <path d="M60,20 L110,20 A50,50 0 0 1 110,120 L60,120 Z"
               fill="{color}22" stroke="{color}" stroke-width="4"/>
         <circle cx="172" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
         <line x1="184" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    if name == "NOR":
+    elif name == "NOR":
         body = f"""
         <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
               fill="{color}22" stroke="{color}" stroke-width="4"/>
         <circle cx="182" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
         <line x1="194" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    if name == "XOR":
+    elif name == "XOR":
         body = f"""
         <path d="M48,18 Q83,70 48,122" fill="none" stroke="{color}" stroke-width="4"/>
         <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
               fill="{color}22" stroke="{color}" stroke-width="4"/>
         <line x1="170" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    if name == "XNOR":
+    elif name == "XNOR":
         body = f"""
         <path d="M48,18 Q83,70 48,122" fill="none" stroke="{color}" stroke-width="4"/>
         <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
@@ -278,9 +288,12 @@ def draw_gate_svg(name):
         <circle cx="182" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
         <line x1="194" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
         """
-        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+        raw = svg_open + _input_lines(True, color) + body + out_label + svg_close
 
-    return svg_open + svg_close
+    else:
+        raw = svg_open + svg_close
+
+    return _flat(raw)
 
 
 def truth_table(gate_name):
