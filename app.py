@@ -1,4 +1,4 @@
-"""
+
 Interactive Logic Gates Learning App
 Built for undergraduate electronics students (first module: Logic Gates)
 Run with: streamlit run app.py
@@ -24,31 +24,85 @@ st.markdown(
     """
     <style>
     .main {background-color: #0e1117;}
+
+    /* ---- Concept cards (Intro page) ---- */
     .gate-card {
-        background: linear-gradient(135deg, #1f2937, #111827);
-        border: 1px solid #374151;
+        background: linear-gradient(135deg, #4c1d95, #1e3a8a);
+        border: 1px solid #6366f1;
         border-radius: 14px;
         padding: 1.2rem 1.4rem;
         margin-bottom: 1rem;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     }
+    .gate-card, .gate-card h4, .gate-card p, .gate-card b {
+        color: #ffffff !important;
+    }
+
+    /* ---- Application cards (Uses page) ---- */
     .app-card {
-        background: #1a1f2b;
-        border-left: 4px solid #22c55e;
+        background: linear-gradient(135deg, #064e3b, #065f46);
+        border-left: 5px solid #34d399;
         border-radius: 10px;
         padding: 1rem 1.2rem;
         margin-bottom: 0.8rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
     }
-    .led-on {
-        font-size: 3rem;
-        color: #22c55e;
+    .app-card, .app-card b {
+        color: #ffffff !important;
+    }
+
+    /* ---- Output bulb (Simulator page) ---- */
+    .bulb-wrap {
         text-align: center;
+        padding: 1rem 0 0.5rem 0;
     }
-    .led-off {
-        font-size: 3rem;
-        color: #ef4444;
-        opacity: 0.5;
+    .bulb-on {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        margin: 0 auto;
+        background: radial-gradient(circle at 35% 30%, #fff9c4, #ffd60a 45%, #f59e0b 75%, #b45309 100%);
+        box-shadow:
+            0 0 25px 10px rgba(255, 214, 10, 0.85),
+            0 0 60px 30px rgba(255, 176, 10, 0.45),
+            inset 0 0 15px rgba(255,255,255,0.6);
+        animation: pulse-glow 1.6s ease-in-out infinite;
+    }
+    .bulb-off {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        margin: 0 auto;
+        background: radial-gradient(circle at 35% 30%, #6b7280, #374151 60%, #111827 100%);
+        box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
+        opacity: 0.85;
+    }
+    @keyframes pulse-glow {
+        0%   { box-shadow: 0 0 20px 8px rgba(255,214,10,0.7), 0 0 50px 25px rgba(255,176,10,0.35), inset 0 0 15px rgba(255,255,255,0.6); }
+        50%  { box-shadow: 0 0 32px 14px rgba(255,214,10,0.95), 0 0 75px 38px rgba(255,176,10,0.55), inset 0 0 18px rgba(255,255,255,0.75); }
+        100% { box-shadow: 0 0 20px 8px rgba(255,214,10,0.7), 0 0 50px 25px rgba(255,176,10,0.35), inset 0 0 15px rgba(255,255,255,0.6); }
+    }
+
+    /* ---- Gate symbol image frame (Types of Gates page) ---- */
+    .symbol-frame {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 0.6rem;
         text-align: center;
+        border: 1px solid #374151;
     }
+
+    /* ---- Simulator gate header banner ---- */
+    .gate-banner {
+        background: linear-gradient(90deg, #7c3aed, #2563eb);
+        color: #ffffff !important;
+        border-radius: 12px;
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+    }
+
     .big-symbol {
         font-family: monospace;
         font-size: 1.1rem;
@@ -130,6 +184,103 @@ GATES = {
 }
 
 GATE_ORDER = ["AND", "OR", "NOT", "NAND", "NOR", "XOR", "XNOR"]
+
+# Distinct accent color per gate, used on symbol fill + simulator banner
+GATE_COLORS = {
+    "AND": "#3b82f6",
+    "OR": "#8b5cf6",
+    "NOT": "#ef4444",
+    "NAND": "#f59e0b",
+    "NOR": "#14b8a6",
+    "XOR": "#ec4899",
+    "XNOR": "#22c55e",
+}
+
+
+def _input_lines(two_inputs, fill):
+    """Common A / B (or just A) input leads + labels."""
+    if two_inputs:
+        return f"""
+        <line x1="5" y1="35" x2="60" y2="35" stroke="#111827" stroke-width="4"/>
+        <line x1="5" y1="105" x2="60" y2="105" stroke="#111827" stroke-width="4"/>
+        <text x="0" y="28" font-size="16" font-weight="bold" fill="#111827">A</text>
+        <text x="0" y="98" font-size="16" font-weight="bold" fill="#111827">B</text>
+        """
+    return f"""
+    <line x1="5" y1="70" x2="60" y2="70" stroke="#111827" stroke-width="4"/>
+    <text x="0" y="63" font-size="16" font-weight="bold" fill="#111827">A</text>
+    """
+
+
+def draw_gate_svg(name):
+    """Return a clean, standard (ANSI-style) SVG schematic symbol for the gate."""
+    color = GATE_COLORS[name]
+    svg_open = '<svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg" width="100%" height="170">'
+    svg_close = "</svg>"
+    out_label = '<text x="196" y="63" font-size="16" font-weight="bold" fill="#111827">Y</text>'
+
+    if name == "AND":
+        body = f"""
+        <path d="M60,20 L110,20 A50,50 0 0 1 110,120 L60,120 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <line x1="160" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    if name == "OR":
+        body = f"""
+        <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <line x1="170" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    if name == "NOT":
+        body = f"""
+        <path d="M60,20 L60,120 L160,70 Z" fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <circle cx="172" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
+        <line x1="184" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(False, color) + body + out_label + svg_close
+
+    if name == "NAND":
+        body = f"""
+        <path d="M60,20 L110,20 A50,50 0 0 1 110,120 L60,120 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <circle cx="172" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
+        <line x1="184" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    if name == "NOR":
+        body = f"""
+        <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <circle cx="182" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
+        <line x1="194" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    if name == "XOR":
+        body = f"""
+        <path d="M48,18 Q83,70 48,122" fill="none" stroke="{color}" stroke-width="4"/>
+        <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <line x1="170" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    if name == "XNOR":
+        body = f"""
+        <path d="M48,18 Q83,70 48,122" fill="none" stroke="{color}" stroke-width="4"/>
+        <path d="M60,20 Q95,70 60,120 Q135,110 170,70 Q135,30 60,20 Z"
+              fill="{color}22" stroke="{color}" stroke-width="4"/>
+        <circle cx="182" cy="70" r="12" fill="white" stroke="{color}" stroke-width="4"/>
+        <line x1="194" y1="70" x2="200" y2="70" stroke="#111827" stroke-width="4"/>
+        """
+        return svg_open + _input_lines(True, color) + body + out_label + svg_close
+
+    return svg_open + svg_close
 
 
 def truth_table(gate_name):
@@ -264,7 +415,10 @@ elif page.startswith("2"):
         with st.expander(f"**{name} Gate** — {g['expr']}", expanded=False):
             c1, c2 = st.columns([1, 1])
             with c1:
-                st.markdown(f'<div class="big-symbol">{g["symbol"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="symbol-frame">{draw_gate_svg(name)}</div>',
+                    unsafe_allow_html=True,
+                )
                 st.markdown(f"**Boolean Expression:** `{g['expr']}`")
                 st.write(g["desc"])
             with c2:
@@ -312,13 +466,25 @@ elif page.startswith("4"):
 
     sel = st.selectbox("Select a Logic Gate", GATE_ORDER)
     g = GATES[sel]
+    color = GATE_COLORS[sel]
 
-    st.markdown(f"**Boolean Expression:** `{g['expr']}`   |   {g['desc']}")
+    st.markdown(
+        f"""
+        <div class="gate-banner" style="background: linear-gradient(90deg, {color}, {color}aa);">
+        ⚡ <b>{sel} Gate</b> &nbsp;|&nbsp; Boolean Expression: <code>{g['expr']}</code> &nbsp;|&nbsp; {g['desc']}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    col_inputs, col_output = st.columns([1, 1])
+    col_symbol, col_inputs, col_output = st.columns([1.2, 1, 1])
+
+    with col_symbol:
+        st.markdown("##### 🔷 Gate Symbol")
+        st.markdown(f'<div class="symbol-frame">{draw_gate_svg(sel)}</div>', unsafe_allow_html=True)
 
     with col_inputs:
-        st.subheader("Inputs")
+        st.markdown("##### 🎛️ Inputs")
         a = st.toggle("Input A", value=False, key="input_a")
         a = int(a)
         if g["inputs"] == 2:
@@ -330,13 +496,15 @@ elif page.startswith("4"):
             output = g["logic"](a)
 
     with col_output:
-        st.subheader("Output")
-        if output == 1:
-            st.markdown('<div class="led-on">🟢</div>', unsafe_allow_html=True)
-            st.markdown("<h3 style='text-align:center;color:#22c55e;'>Y = 1 (HIGH)</h3>", unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="led-off">🔴</div>', unsafe_allow_html=True)
-            st.markdown("<h3 style='text-align:center;color:#ef4444;'>Y = 0 (LOW)</h3>", unsafe_allow_html=True)
+        st.markdown("##### 💡 Output Bulb")
+        bulb_class = "bulb-on" if output == 1 else "bulb-off"
+        st.markdown(f'<div class="bulb-wrap"><div class="{bulb_class}"></div></div>', unsafe_allow_html=True)
+        label_color = "#facc15" if output == 1 else "#9ca3af"
+        state_word = "HIGH" if output == 1 else "LOW"
+        st.markdown(
+            f"<h3 style='text-align:center;color:{label_color};'>Y = {output} ({state_word})</h3>",
+            unsafe_allow_html=True,
+        )
 
     st.markdown("---")
     st.subheader("📋 Truth Table (current row highlighted)")
@@ -353,22 +521,29 @@ elif page.startswith("4"):
     st.dataframe(tt.style.apply(highlight_row, axis=1), use_container_width=True, hide_index=True)
 
     st.markdown("---")
-    st.subheader("🔗 Bonus: Cascaded Circuit — AND → NOT (i.e. a NAND gate built from parts)")
-    st.caption("This shows how simple gates combine to build more complex logic.")
-    cc1, cc2 = st.columns(2)
+    st.markdown(
+        """
+        <div class="gate-banner" style="background: linear-gradient(90deg, #f59e0b, #ef4444);">
+        🔗 <b>Bonus: Cascaded Circuit</b> — AND ➜ NOT (this combination behaves exactly like a NAND gate!)
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    cc1, cc2, cc3 = st.columns(3)
     with cc1:
+        st.markdown("##### 🎛️ Inputs")
         ca = st.toggle("Input A ", value=False, key="cascade_a")
         cb = st.toggle("Input B ", value=False, key="cascade_b")
     and_out = int(ca and cb)
     not_out = int(not and_out)
     with cc2:
-        st.write(f"AND stage output: **{and_out}**")
-        st.write(f"NOT stage output (final): **{not_out}**")
-        st.markdown(
-            '<div class="led-on">🟢</div>' if not_out == 1 else '<div class="led-off">🔴</div>',
-            unsafe_allow_html=True,
-        )
-    st.info("Notice: this cascade behaves exactly like a single NAND gate!")
+        st.markdown("##### ⚙️ Stage Outputs")
+        st.markdown(f"AND stage output: **{and_out}**")
+        st.markdown(f"NOT stage (final) output: **{not_out}**")
+    with cc3:
+        st.markdown("##### 💡 Final Bulb")
+        bulb_class = "bulb-on" if not_out == 1 else "bulb-off"
+        st.markdown(f'<div class="bulb-wrap"><div class="{bulb_class}"></div></div>', unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------
 # 5. QUIZ
